@@ -4,35 +4,43 @@ import { configSchema } from '../../src/config/schema.js';
 
 // Mock the MCP SDK transport modules to verify they get instantiated correctly
 vi.mock('@modelcontextprotocol/sdk/client/sse.js', () => ({
-  SSEClientTransport: vi.fn().mockImplementation((url, opts) => ({
+  SSEClientTransport: vi.fn().mockImplementation(function (url: URL, opts: unknown) {
+    return {
     url,
     opts,
     onclose: null,
     onerror: null,
-  })),
+    };
+  }),
 }));
 
 vi.mock('@modelcontextprotocol/sdk/client/streamableHttp.js', () => ({
-  StreamableHTTPClientTransport: vi.fn().mockImplementation((url, opts) => ({
+  StreamableHTTPClientTransport: vi.fn().mockImplementation(function (url: URL, opts: unknown) {
+    return {
     url,
     opts,
     onclose: null,
     onerror: null,
-  })),
+    };
+  }),
 }));
 
 vi.mock('@modelcontextprotocol/sdk/client', () => ({
-  Client: vi.fn().mockImplementation(() => ({
+  Client: vi.fn().mockImplementation(function () {
+    return {
     connect: vi.fn(),
     close: vi.fn(),
-  })),
+    };
+  }),
 }));
 
 vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
-  StdioClientTransport: vi.fn().mockImplementation(() => ({
+  StdioClientTransport: vi.fn().mockImplementation(function () {
+    return {
     onclose: null,
     onerror: null,
-  })),
+    };
+  }),
 }));
 
 import { createUpstreamClient } from '../../src/proxy/mcp-client.js';
