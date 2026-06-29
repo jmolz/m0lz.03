@@ -1,5 +1,6 @@
 {
   "branches": ["main"],
+  "repositoryUrl": "https://github.com/jmolz/m0lz.03.git",
   "plugins": [
     ["@semantic-release/commit-analyzer", {
       "preset": "conventionalcommits",

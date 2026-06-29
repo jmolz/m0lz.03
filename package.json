@@ -7,11 +7,11 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jmolz/mcp-guard.git"
+    "url": "git+https://github.com/jmolz/m0lz.03.git"
   },
-  "homepage": "https://github.com/jmolz/mcp-guard#readme",
+  "homepage": "https://github.com/jmolz/m0lz.03#readme",
   "bugs": {
-    "url": "https://github.com/jmolz/mcp-guard/issues"
+    "url": "https://github.com/jmolz/m0lz.03/issues"
   },
   "keywords": [
     "mcp",
