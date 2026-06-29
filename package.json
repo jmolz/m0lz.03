@@ -51,7 +51,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "better-sqlite3-multiple-ciphers": "^11.9.1",
     "commander": "^13.1.0",
     "jose": "^6.2.2",
