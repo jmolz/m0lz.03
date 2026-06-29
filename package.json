@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "better-sqlite3-multiple-ciphers": "^11.9.1",
+    "better-sqlite3-multiple-ciphers": "^12.11.1",
     "commander": "^13.1.0",
     "jose": "^6.2.2",
     "js-yaml": "^4.1.0",
