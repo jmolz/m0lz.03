@@ -55,7 +55,7 @@
     "better-sqlite3-multiple-ciphers": "^12.11.1",
     "commander": "^13.1.0",
     "jose": "^6.2.2",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^5.2.0",
     "koffi": "^2.9.3",
     "oauth4webapi": "^3.8.5",
     "zod": "^3.24.4"
