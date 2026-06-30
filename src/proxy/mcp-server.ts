@@ -2,6 +2,15 @@ import type { JsonRpcMessage } from '../bridge/types.js';
 import type { UpstreamClient } from './mcp-client.js';
 import type { Logger } from '../logger.js';
 
+const SUPPORTED_PROTOCOL_VERSIONS = [
+  '2025-11-25',
+  '2025-06-18',
+  '2025-03-26',
+  '2024-11-05',
+  '2024-10-07',
+] as const;
+const LATEST_PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0];
+
 export interface ProxyServer {
   handleMessage(message: JsonRpcMessage, serverName: string): Promise<JsonRpcMessage>;
 }
@@ -68,6 +77,30 @@ async function routeMethod(
   const client = upstream.client;
 
   switch (method) {
+    case 'initialize': {
+      const requestedVersion =
+        typeof params?.['protocolVersion'] === 'string' ? params['protocolVersion'] : undefined;
+      const protocolVersion =
+        requestedVersion &&
+        (SUPPORTED_PROTOCOL_VERSIONS as readonly string[]).includes(requestedVersion)
+          ? requestedVersion
+          : LATEST_PROTOCOL_VERSION;
+      const instructions = client.getInstructions();
+
+      return {
+        protocolVersion,
+        capabilities: client.getServerCapabilities() ?? {},
+        serverInfo: client.getServerVersion() ?? {
+          name: `mcp-guard-upstream-${upstream.name}`,
+          version: 'unknown',
+        },
+        ...(instructions ? { instructions } : {}),
+      };
+    }
+
+    case 'ping':
+      return await client.ping();
+
     case 'tools/list':
       return await client.listTools(params as Parameters<typeof client.listTools>[0]);
 

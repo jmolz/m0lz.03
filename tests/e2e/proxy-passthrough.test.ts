@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import type { Socket } from 'node:net';
 import { ensureDaemonKey, readDaemonKey } from '../../src/identity/daemon-key.js';
 import { loadConfig } from '../../src/config/loader.js';
 import { startDaemon, type DaemonHandle } from '../../src/daemon/index.js';
@@ -105,6 +106,42 @@ daemon:
         resolve();
       });
     });
+  });
+
+  it('responds to downstream initialize without reinitializing the upstream server', async () => {
+    const socket = await authenticatedSocket();
+
+    writeFramed(socket, {
+      type: 'mcp',
+      server: 'mock',
+      data: {
+        jsonrpc: '2.0',
+        id: 10,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          clientInfo: { name: 'test-client', version: '1.0.0' },
+        },
+      },
+    });
+
+    const response = (await readFramed(socket)) as {
+      type: string;
+      data: {
+        result: {
+          protocolVersion: string;
+          capabilities: Record<string, unknown>;
+          serverInfo: { name: string; version: string };
+        };
+      };
+    };
+
+    expect(response.type).toBe('mcp');
+    expect(response.data.result.protocolVersion).toBe('2024-11-05');
+    expect(response.data.result.serverInfo).toEqual({ name: 'mock-mcp-server', version: '1.0.0' });
+    expect(response.data.result.capabilities).toHaveProperty('tools');
+    socket.destroy();
   });
 
   it('proxies tools/list through daemon', async () => {
