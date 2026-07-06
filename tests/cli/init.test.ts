@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { configSchema } from '../../src/config/schema.js';
 
 // Mock fs/promises before importing the module under test

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { configSchema, type McpGuardConfig } from './schema.js';
 import { ConfigError } from '../errors.js';
 import { fetchBaseConfig } from './fetcher.js';
