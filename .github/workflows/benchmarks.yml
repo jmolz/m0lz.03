@@ -2,6 +2,23 @@ name: Benchmarks
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/benchmarks.yml'
+      - 'benchmarks/**'
+      - 'src/config/**'
+      - 'src/daemon/**'
+      - 'src/identity/**'
+      - 'src/interceptors/**'
+      - 'src/pii/**'
+      - 'src/proxy/**'
+      - 'src/storage/**'
+      - 'tests/fixtures/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'tsconfig.json'
+      - 'tsup.config.ts'
   schedule:
     - cron: '0 6 * * 0' # Sundays at 6am UTC
 

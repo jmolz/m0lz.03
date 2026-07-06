@@ -10,7 +10,7 @@ export const permissionsSchema = z.object({
   denied_tools: z.array(z.string()).default([]),
   allowed_resources: z.array(z.string()).optional(),
   denied_resources: z.array(z.string()).default([]),
-}).default({});
+}).prefault({});
 
 export const rateLimitSchema = z.object({
   requests_per_minute: z.number().min(1).optional(),
@@ -18,7 +18,7 @@ export const rateLimitSchema = z.object({
   tool_limits: z.record(z.string(), z.object({
     requests_per_minute: z.number().min(1).optional(),
   })).default({}),
-}).default({});
+}).prefault({});
 
 export const policySchema = z.object({
   permissions: permissionsSchema,
@@ -28,14 +28,14 @@ export const policySchema = z.object({
     max_tokens: z.number().min(1).optional(),
     rate_limit: z.number().min(1).optional(),
     audit: z.enum(['basic', 'verbose']).default('basic'),
-  }).default({}),
+  }).prefault({}),
   locked: z.boolean().default(false),
-}).default({});
+}).prefault({});
 
 export const serverSchema = z.object({
   command: z.string().optional(),
   args: z.array(z.string()).default([]),
-  env: z.record(z.string()).default({}),
+  env: z.record(z.string(), z.string()).default({}),
   url: z.string().url().optional(),
   transport: z.enum(['stdio', 'sse', 'streamable-http']).default('stdio'),
   /** Bearer token for authenticating MCP-Guard to the upstream HTTP server.
@@ -52,13 +52,13 @@ export const daemonSchema = z.object({
   dashboard_port: z.number().min(0).max(65535).default(DEFAULT_DASHBOARD_PORT),
   encryption: z.object({
     enabled: z.boolean().default(false),
-  }).default({}),
-});
+  }).prefault({}),
+}).prefault({});
 
 export const claimsToRolesSchema = z.object({
   claim_name: z.string().default('roles'),
   mapping: z.record(z.string(), z.array(z.string())).default({}),
-}).default({});
+}).prefault({});
 
 export const oauthSchema = z.object({
   issuer: z.string().url(),
@@ -81,7 +81,7 @@ export const authSchema = z.object({
     permissions: permissionsSchema,
     rate_limit: rateLimitSchema,
   })).default({}),
-}).default({}).refine((auth) => {
+}).prefault({}).refine((auth) => {
   if (auth.mode === 'oauth' && !auth.oauth) {
     return false;
   }
@@ -91,7 +91,7 @@ export const authSchema = z.object({
 export const interceptorConfigSchema = z.object({
   timeout: z.number().min(1).default(10),
   timeout_action: z.enum(['block']).default('block'),
-}).default({});
+}).prefault({});
 
 const piiActionSchema = z.enum(['block', 'redact', 'warn']);
 
@@ -118,13 +118,13 @@ export const piiSchema = z.object({
     github_token: { request: 'redact', response: 'redact' },
   }),
   custom_types: z.record(z.string(), customPiiTypeSchema).default({}),
-}).default({});
+}).prefault({});
 
 export const auditSchema = z.object({
   enabled: z.boolean().default(true),
   stdout: z.boolean().default(true),
   retention_days: z.number().min(1).default(90),
-}).default({});
+}).prefault({});
 
 export const extendsSchema = z.object({
   url: z.string().url().refine((url) => {
@@ -143,7 +143,7 @@ export const extendsSchema = z.object({
 export const configSchema = z.object({
   extends: extendsSchema.optional(),
   servers: z.record(z.string(), serverSchema),
-  daemon: daemonSchema.default({}),
+  daemon: daemonSchema,
   auth: authSchema,
   interceptors: interceptorConfigSchema,
   pii: piiSchema,

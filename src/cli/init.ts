@@ -2,7 +2,7 @@ import { readFile, writeFile, access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { homedir, platform } from 'node:os';
 import type { Command } from 'commander';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { configSchema } from '../config/schema.js';
 
 interface DiscoveredServer {
@@ -164,7 +164,7 @@ function generateConfig(servers: DiscoveredServer[]): string {
     },
   };
 
-  return yaml.dump(config, { lineWidth: 120, quotingType: '"', forceQuotes: false });
+  return yaml.dump(config, { lineWidth: 120, forceQuotes: false });
 }
 
 function generateInstructions(servers: DiscoveredServer[]): string {

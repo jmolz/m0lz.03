@@ -14,10 +14,20 @@ export interface RateLimitStore {
   cleanup(olderThan: Date): void;
 }
 
+function parseLastRefillMs(lastRefill: string): number {
+  // Older rows used SQLite datetime('now') values ("YYYY-MM-DD HH:mm:ss").
+  // New rows use ISO-8601 with milliseconds so rapid bursts do not get a
+  // full fractional-second refill on every request within the same second.
+  const normalized = lastRefill.includes('T')
+    ? lastRefill
+    : `${lastRefill.replace(' ', 'T')}Z`;
+  return new Date(normalized).getTime();
+}
+
 export function createRateLimitStore(db: Database.Database): RateLimitStore {
   const upsertStmt = db.prepare(`
     INSERT INTO rate_limits (key, tokens, max_tokens, refill_rate, last_refill, updated_at)
-    VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
     ON CONFLICT(key) DO UPDATE SET
       tokens = excluded.tokens,
       max_tokens = excluded.max_tokens,
@@ -42,20 +52,21 @@ export function createRateLimitStore(db: Database.Database): RateLimitStore {
 
   const tryConsumeTransaction = db.transaction(
     (key: string, config: RateLimitConfig): boolean => {
+      const now = Date.now();
+      const nowIso = new Date(now).toISOString();
       const row = selectStmt.get(key) as
         | { tokens: number; max_tokens: number; refill_rate: number; last_refill: string }
         | undefined;
 
       if (!row) {
         // First request — initialize with maxTokens - 1 (consuming one)
-        upsertStmt.run(key, config.maxTokens - 1, config.maxTokens, config.refillRate);
+        upsertStmt.run(key, config.maxTokens - 1, config.maxTokens, config.refillRate, nowIso);
         return true;
       }
 
       // Calculate token refill — clamp to CURRENT config ceiling,
       // not the persisted max_tokens (handles tightened limits)
-      const lastRefill = new Date(row.last_refill + 'Z').getTime();
-      const now = Date.now();
+      const lastRefill = parseLastRefillMs(row.last_refill);
       const elapsedSeconds = (now - lastRefill) / 1000;
       const effectiveMax = Math.min(row.max_tokens, config.maxTokens);
       const refilled = Math.min(
@@ -71,7 +82,7 @@ export function createRateLimitStore(db: Database.Database): RateLimitStore {
       }
 
       // Consume one token
-      upsertStmt.run(key, refilled - 1, config.maxTokens, config.refillRate);
+      upsertStmt.run(key, refilled - 1, config.maxTokens, config.refillRate, nowIso);
       return true;
     },
   );
@@ -87,7 +98,7 @@ export function createRateLimitStore(db: Database.Database): RateLimitStore {
         | undefined;
       if (!row) return null;
 
-      const lastRefill = new Date(row.last_refill + 'Z').getTime();
+      const lastRefill = parseLastRefillMs(row.last_refill);
       const now = Date.now();
       const elapsedSeconds = (now - lastRefill) / 1000;
       return Math.min(row.max_tokens, row.tokens + elapsedSeconds * row.refill_rate);
