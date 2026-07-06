@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createRateLimitInterceptor } from '../../src/interceptors/rate-limit.js';
 import { createRateLimitStore, type RateLimitStore } from '../../src/storage/rate-limit-store.js';
 import { openDatabase } from '../../src/storage/sqlite.js';
@@ -59,6 +59,7 @@ describe('Rate limit interceptor', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     db.close();
   });
 
@@ -130,6 +131,27 @@ describe('Rate limit interceptor', () => {
     // Should pass now (refilled ~1.25 tokens)
     result = await interceptor.execute(makeContext());
     expect(result.action).toBe('PASS');
+  });
+
+  it('uses millisecond refill timestamps so rapid bursts do not over-refill', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.900Z'));
+
+    const key = 'server:test:testuser:rapid-burst';
+    const limit = { maxTokens: 2, refillRate: 1 };
+
+    expect(store.tryConsume(key, limit)).toBe(true);
+    const row = db.prepare('SELECT last_refill FROM rate_limits WHERE key = ?').get(key) as
+      | { last_refill: string }
+      | undefined;
+    expect(row?.last_refill).toBe('2026-01-01T00:00:00.900Z');
+
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.910Z'));
+    expect(store.tryConsume(key, limit)).toBe(true);
+
+    vi.setSystemTime(new Date('2026-01-01T00:00:00.920Z'));
+    expect(store.tryConsume(key, limit)).toBe(false);
+    expect(store.getRemaining(key)).toBeLessThan(1);
   });
 
   it('different servers have independent limits', async () => {
